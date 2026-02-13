@@ -3,28 +3,12 @@
 #ifndef BEMAN_SLICE_VIEW_HPP
 #define BEMAN_SLICE_VIEW_HPP
 
+#include <beman/slice_view/detail/concepts.hpp>
 #include <ranges>
 #include <iterator>
 #include <concepts>
 
 namespace beman::slice_view {
-
-namespace detail {
-    template <typename r>
-    concept simple_view_ref =
-                std::same_as<std::ranges::iterator_t<T>,
-                std::ranges::iterator_t<const T>> &&
-                std::same_as<std::ranges::sentinel_t<T>,
-                std::ranges::sentinel_t<const T>>;
-
-    template <typename rng>
-    concept simple_view =
-                std::ranges::view<rng> &&
-                std::ranges::range<const rng> &&
-                simple_view_ref<rng>;
-
-} // namespace detail
-
 template <std::ranges::view V>
 class slice_view 
     : public std::ranges::view_interface<slice_view<V>> {
@@ -176,9 +160,30 @@ class slice_view
  * Deduction guide for constructing a slice_view from a `viewable_range`
  */
 template<class R>
-slice_view(R&&, std::ranges::range_difference_t<R>, std::ranges::range_difference_t<R>) -> slice_view<std::ranges::views::all_t<R>>;
+slice_view(R&&, std::ranges::range_difference_t<R>, std::ranges::range_difference_t<R>) -> slice_view<std::ranges::views::all_t<R> >;
 
+namespace views {
+    namespace detail {
+        struct slice_impl : std::ranges::range_adaptor_closure<slice_impl> {
+            template<viewable_range R, class D = std::ranges::range_difference_t<R>>
+            requires requires { slice_view(std::declval<R>(), std::declval<D>(), std::declval<D>()); }
+            constexpr auto
+            operator()(R&& r, std::type_identity_t<D> n, std::type_identity_t<D> m) const {
+                using T = std::remove_cvref_t<R>;
+                if constexpr (is_empty_view<T> || is_repeat_view<T> ||
+                            is_span<T> || is_basic_string_view<T>)
+                    return std::forward<R>(r) | std::ranges::views::drop(n) | std::ranges::views::take(m - n);
+                else if constexpr ((is_iota_view<T> || is_subrange<T>) &&
+                                std::ranges::random_access_range<T> && std::ranges::sized_range<T>)
+                    return std::forward<R>(r) | std::ranges::views::drop(n) | std::ranges::views::take(m - n);
+                else
+                    return slice_view(std::forward<R>(r), n, m);
+            }
+        };
+    }
 
+    inline constexpr detail::slice_impl slice;
+}
 
 }
 
