@@ -24,10 +24,48 @@ namespace beman::slice_view::views {
         concept is_empty_view =
         is_specialization_of<
             std::ranges::empty_view,
-            std::__remove_cvref_t<T>
+            std::remove_cvref_t<T>
         >::value;
 
-        // 
+        // is repeat
+        template <typename T>
+        concept is_repeat_view =
+        is_specialization_of<
+            std::ranges::repeat_view,
+            std::remove_cvref_t<T>
+        >::value;
+
+        // is iota
+        template <typename T>
+        concept is_iota_view =
+        is_specialization_of<
+            std::ranges::iota_view,
+            std::remove_cvref_t<T>
+        >::value;
+
+        // is subrange
+        template <typename T>
+        concept is_subrange =
+        is_specialization_of<
+            std::ranges::subrange,
+            std::remove_cvref_t<T>
+        >::value;
+
+        // is basic string view
+        template <typename T>
+        concept is_subrange =
+        is_specialization_of<
+            std::basic_string_view,
+            std::remove_cvref_t<T>
+        >::value;
+
+        // is span
+        template <typename T>
+        concept is_subrange =
+        is_specialization_of<
+            std::span,
+            std::remove_cvref_t<T>
+        >::value;
 
     } // namespace detail
 }
