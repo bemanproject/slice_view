@@ -172,6 +172,14 @@ class slice_view
         }
 };
 
+/**
+ * Deduction guide for constructing a slice_view from a `viewable_range`
+ */
+template<class R>
+slice_view(R&&, std::ranges::range_difference_t<R>, std::ranges::range_difference_t<R>) -> slice_view<std::ranges::views::all_t<R>>;
+
+
+
 }
 
 #endif // BEMAN_SLICE_VIEW_HPP
