@@ -43,29 +43,27 @@ namespace beman::slice_view::views {
             std::remove_cvref_t<T>
         >::value;
 
-        // is subrange
-        template <typename T>
-        concept is_subrange =
-        is_specialization_of<
-            std::ranges::subrange,
-            std::remove_cvref_t<T>
-        >::value;
-
         // is basic string view
         template <typename T>
-        concept is_subrange =
+        concept is_basic_string_view =
         is_specialization_of<
             std::basic_string_view,
             std::remove_cvref_t<T>
         >::value;
 
+        // is subrange
+        template<typename T>
+        struct is_subrange : std::false_type {};
+
+        template<typename I, typename S, std::ranges::subrange_kind K>
+        struct is_subrange<std::ranges::subrange<I, S, K>> : std::true_type {};
+
         // is span
-        template <typename T>
-        concept is_subrange =
-        is_specialization_of<
-            std::span,
-            std::remove_cvref_t<T>
-        >::value;
+        template<typename T>
+        struct is_span : std::false_type {};
+
+        template<typename T2, std::size_t Extent>
+        struct is_span<std::span<T2, Extent>> : std::true_type {};
 
     } // namespace detail
 }
