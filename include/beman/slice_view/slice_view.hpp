@@ -80,7 +80,8 @@ class slice_view
                     return counted_iterator(std::ranges::next(std::ranges::begin(base_), std::min(from_, n)),
                                             std::min(to_, n) - std::min(from_, n));
                 }
-            } else if constexpr (std::ranges::sized_sentinel_for<sentinel_t<V>, iterator_t<V>>) {
+            } else if constexpr (std::sized_sentinel_for<std::ranges::sentinel_t<V>, 
+            std::ranges::iterator_t<V>>) {
                 auto it = std::ranges::begin(base_);
                 auto n = std::ranges::end(base_) - it;
                 return counted_iterator(std::ranges::next(std::move(it), std::min(from_, n)),
@@ -116,7 +117,7 @@ class slice_view
                     return std::ranges::begin(base_) + std::min(to_, std::ranges::distance(base_));
                 else
                     return std::default_sentinel;
-            } else if constexpr (std::ranges::sized_sentinel_for<
+            } else if constexpr (std::sized_sentinel_for<
                     std::ranges::sentinel_t<V>,
                     std::ranges::iterator_t<V>
                 >)
@@ -165,15 +166,14 @@ slice_view(R&&, std::ranges::range_difference_t<R>, std::ranges::range_differenc
 namespace views {
     namespace detail {
         struct slice_impl : std::ranges::range_adaptor_closure<slice_impl> {
-            template<viewable_range R, class D = std::ranges::range_difference_t<R>>
+            template<std::ranges::viewable_range R, class D = std::ranges::range_difference_t<R>>
             requires requires { slice_view(std::declval<R>(), std::declval<D>(), std::declval<D>()); }
             constexpr auto
             operator()(R&& r, std::type_identity_t<D> n, std::type_identity_t<D> m) const {
                 using T = std::remove_cvref_t<R>;
-                if constexpr (is_empty_view<T> || is_repeat_view<T> ||
-                            is_span<T> || is_basic_string_view<T>)
+                if constexpr (is_empty_view<T> || is_repeat_view<T> || is_span_v<T> || is_basic_string_view<T>)
                     return std::forward<R>(r) | std::ranges::views::drop(n) | std::ranges::views::take(m - n);
-                else if constexpr ((is_iota_view<T> || is_subrange<T>) &&
+                else if constexpr ((is_iota_view<T> || is_subrange_v<T>) &&
                                 std::ranges::random_access_range<T> && std::ranges::sized_range<T>)
                     return std::forward<R>(r) | std::ranges::views::drop(n) | std::ranges::views::take(m - n);
                 else

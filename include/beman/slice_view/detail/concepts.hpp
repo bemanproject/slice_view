@@ -58,6 +58,9 @@ namespace beman::slice_view::views {
         template<typename I, typename S, std::ranges::subrange_kind K>
         struct is_subrange<std::ranges::subrange<I, S, K>> : std::true_type {};
 
+        template<typename T>
+        inline constexpr bool is_subrange_v = is_subrange<std::remove_cvref_t<T>>::value;
+
         // is span
         template<typename T>
         struct is_span : std::false_type {};
@@ -65,12 +68,15 @@ namespace beman::slice_view::views {
         template<typename T2, std::size_t Extent>
         struct is_span<std::span<T2, Extent>> : std::true_type {};
 
+        template<typename T>
+        inline constexpr bool is_span_v = is_span<std::remove_cvref_t<T>>::value;
+
     } // namespace detail
 }
 
 namespace beman::slice_view {
     namespace detail {
-        template <typename r>
+        template <typename T>
         concept simple_view_ref =
                     std::same_as<std::ranges::iterator_t<T>,
                     std::ranges::iterator_t<const T>> &&
