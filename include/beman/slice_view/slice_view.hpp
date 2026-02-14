@@ -77,7 +77,7 @@ class slice_view
                     return std::ranges::begin(base_) + std::min(from_, std::ranges::distance(base_));
                 else {
                     auto n = std::ranges::distance(base_);
-                    return counted_iterator(std::ranges::next(std::ranges::begin(base_), std::min(from_, n)),
+                    return std::counted_iterator(std::ranges::next(std::ranges::begin(base_), std::min(from_, n)),
                                             std::min(to_, n) - std::min(from_, n));
                 }
             } else if constexpr (std::sized_sentinel_for<std::ranges::sentinel_t<V>, 
