@@ -4,13 +4,19 @@
 
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <functional>
+#include <list>
+#include <sstream>
 
 namespace exe = beman::slice_view;
 
-TEST(slice_view_, simple_test) {
-    auto ints = std::ranges::views::iota(0);
-    auto fifties = exe::views::slice(ints, 50, 60);
-    std::printf("{} ", fifties);  // prints [50, 51, 52, 53, 54, 55, 56, 57, 58, 59]
+TEST(slice_view_, simple_test_list) {
+    std::list l{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    auto twos = exe::views::slice(l, 5, 7);
+
+    std::list tmp{6, 7};
+
+    for (int i: twos) {
+        assert(i == tmp.front());
+        tmp.pop_front();
+    }
 }
