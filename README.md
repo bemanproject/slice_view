@@ -5,13 +5,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
 <!-- markdownlint-disable-next-line line-length -->
-![Library Status](https://raw.githubusercontent.com/bemanproject/beman/refs/heads/main/images/badges/beman_badge-beman_library_under_development.svg) ![Continuous Integration Tests](https://github.com/github-user-name/slice_view/actions/workflows/ci_tests.yml/badge.svg) ![Lint Check (pre-commit)](https://github.com/github-user-name/slice_view/actions/workflows/pre-commit-check.yml/badge.svg) [![Coverage](https://coveralls.io/repos/github/github-user-name/slice_view/badge.svg?branch=main)](https://coveralls.io/github/github-user-name/slice_view?branch=main) ![Standard Target](https://github.com/bemanproject/beman/blob/main/images/badges/cpp29.svg) [![Compiler Explorer Example](https://img.shields.io/badge/Try%20it%20on%20Compiler%20Explorer-grey?logo=compilerexplorer&logoColor=67c52a)](https://godbolt.org/z/rYeqa3vzM)
+![Library Status](https://raw.githubusercontent.com/bemanproject/beman/refs/heads/main/images/badges/beman_badge-beman_library_under_development.svg) ![Continuous Integration Tests](https://github.com/github-user-name/slice_view/actions/workflows/ci_tests.yml/badge.svg) ![Lint Check (pre-commit)](https://github.com/github-user-name/slice_view/actions/workflows/pre-commit-check.yml/badge.svg) [![Coverage](https://coveralls.io/repos/github/github-user-name/slice_view/badge.svg?branch=main)](https://coveralls.io/github/github-user-name/slice_view?branch=main) ![Standard Target](https://github.com/bemanproject/beman/blob/main/images/badges/cpp29.svg) [![Compiler Explorer Example](https://img.shields.io/badge/Try%20it%20on%20Compiler%20Explorer-grey?logo=compilerexplorer&logoColor=67c52a)](https://godbolt.org/z/o3aYd7jzT)
 
 `beman.slice_view` is a minimal C++ library conforming to [The Beman Standard](https://github.com/bemanproject/beman/blob/main/docs/beman_standard.md).
 This can be used as a template for those intending to write Beman libraries.
 It may also find use as a minimal and modern  C++ project structure.
 
-**Implements**: `std::identity` proposed in [Standard Library Concepts (P3216R0)](https://wg21.link/P3216R0).
+**Implements**: Slice Range Adaptor proposed in [Standard Library Concepts (P3216R0)](https://wg21.link/P3216R0).
 
 **Status**: [Under development and not yet ready for production use.](https://github.com/bemanproject/beman/blob/main/docs/beman_library_maturity_model.md#under-development-and-not-yet-ready-for-production-use)
 
@@ -21,61 +21,28 @@ It may also find use as a minimal and modern  C++ project structure.
 
 ## Usage
 
-`std::identity` is a function object type whose `operator()` returns its argument unchanged.
-`std::identity` serves as the default projection in constrained algorithms.
-Its direct usage is usually not needed.
+`slice` provides a means of extracting a contiguous subrange from a sequence by specifying a start and end index.
 
 ### Usage: default projection in constrained algorithms
 
-The following code snippet illustrates how we can achieve a default projection using `beman::slice_view::identity`:
+The following code snippet illustrates how we can achieve a default projection using `beman::slice_view::slice_view`:
 
 ```cpp
-#include <beman/slice_view/identity.hpp>
+#include <beman/slice_view/slice_view.hpp>
+#include <iostream>
+#include <string_view>
 
 namespace exe = beman::slice_view;
 
-// Class with a pair of values.
-struct Pair
-{
-    int n;
-    std::string s;
-
-    // Output the pair in the form {n, s}.
-    // Used by the range-printer if no custom projection is provided (default: identity projection).
-    friend std::ostream &operator<<(std::ostream &os, const Pair &p)
-    {
-        return os << "Pair" << '{' << p.n << ", " << p.s << '}';
-    }
-};
-
-// A range-printer that can print projected (modified) elements of a range.
-// All the elements of the range are printed in the form {element1, element2, ...}.
-// e.g., pairs with identity: Pair{1, one}, Pair{2, two}, Pair{3, three}
-// e.g., pairs with custom projection: {1:one, 2:two, 3:three}
-template <std::ranges::input_range R,
-          typename Projection>
-void print(const std::string_view rem, R &&range, Projection projection = exe::identity>)
-{
-    std::cout << rem << '{';
-    std::ranges::for_each(
-        range,
-        [O = 0](const auto &o) mutable
-        { std::cout << (O++ ? ", " : "") << o; },
-        projection);
-    std::cout << "}\n";
-};
-
 int main()
 {
-    // A vector of pairs to print.
-    const std::vector<Pair> pairs = {
-        {1, "one"},
-        {2, "two"},
-        {3, "three"},
-    };
+    std::string_view text = "Hello, world!";
+    auto s = text | exe::views::slice(7, 12);  // world
 
-    // Print the pairs using the default projection.
-    print("\tpairs with beman: ", pairs);
+    for (char c : s)
+        std::cout << c;
+
+    std::cout << '\n';
 
     return 0;
 }
@@ -328,14 +295,14 @@ To use `beman.slice_view` in your C++ project,
 include an appropriate `beman.slice_view` header from your source code.
 
 ```c++
-#include <beman/slice_view/identity.hpp>
+#include <beman/slice_view/slice_view.hpp>
 ```
 
 > [!NOTE]
 >
 > `beman.slice_view` headers are to be included with the `beman/slice_view/` prefix.
 > Altering include search paths to spell the include target another way (e.g.
-> `#include <identity.hpp>`) is unsupported.
+> `#include <slice_view.hpp>`) is unsupported.
 
 The process for incorporating `beman.slice_view` into your project depends on the
 build system being used. Instructions for CMake are provided in following sections.
@@ -373,7 +340,9 @@ This will generate the following directory structure at `/opt/beman`.
 ├── include
 │   └── beman
 │       └── slice_view
-│           └── identity.hpp
+│           ├── slice_view.hpp
+│           └── detail
+│               └── concepts.hpp
 └── lib
     └── cmake
         └── beman.slice_view
