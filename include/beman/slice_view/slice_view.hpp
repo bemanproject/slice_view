@@ -41,12 +41,13 @@ class slice_view
 
         /**
          * Construct from `base`, `from`, and `to`.
+         * If to < from, the slice_view represents an empty range.
          */
         constexpr explicit slice_view(
             V base, 
             std::ranges::range_difference_t<V> from, 
             std::ranges::range_difference_t<V> to)
-        : base_(std::move(base)), from_(from), to_(to) { }
+        : base_(std::move(base)), from_(from), to_(to < from ? from : to) { }
         
         /**
          * Returns a constant reference to underlying view, copy the base.
@@ -165,11 +166,38 @@ slice_view(R&&, std::ranges::range_difference_t<R>, std::ranges::range_differenc
 
 namespace views {
     namespace detail {
-        struct slice_impl : std::ranges::range_adaptor_closure<slice_impl> {
+        // Closure adaptor that captures from and to parameters for piping
+        template <class D>
+        struct slice_closure : std::ranges::range_adaptor_closure<slice_closure<D>> {
+            D from_, to_;
+
+            constexpr slice_closure(D from, D to) : from_(from), to_(to) {}
+
+            template<std::ranges::viewable_range R>
+            requires requires { slice_view(std::declval<R>(), std::declval<D>(), std::declval<D>()); }
+            constexpr auto operator()(R&& r) const {
+                using T = std::remove_cvref_t<R>;
+                if constexpr (is_empty_view<T> || is_repeat_view<T> || is_span_v<T> || is_basic_string_view<T>)
+                    return std::forward<R>(r) | std::ranges::views::drop(from_) | std::ranges::views::take(to_ - from_);
+                else if constexpr ((is_iota_view<T> || is_subrange_v<T>) &&
+                                std::ranges::random_access_range<T> && std::ranges::sized_range<T>)
+                    return std::forward<R>(r) | std::ranges::views::drop(from_) | std::ranges::views::take(to_ - from_);
+                else
+                    return slice_view(std::forward<R>(r), from_, to_);
+            }
+        };
+
+        struct slice_impl {
+            // Called with just from and to - returns a closure for piping
+            template<class D>
+            constexpr auto operator()(D n, D m) const {
+                return slice_closure<D>(n, m);
+            }
+
+            // Called with range and from, to - direct application
             template<std::ranges::viewable_range R, class D = std::ranges::range_difference_t<R>>
             requires requires { slice_view(std::declval<R>(), std::declval<D>(), std::declval<D>()); }
-            constexpr auto
-            operator()(R&& r, std::type_identity_t<D> n, std::type_identity_t<D> m) const {
+            constexpr auto operator()(R&& r, std::type_identity_t<D> n, std::type_identity_t<D> m) const {
                 using T = std::remove_cvref_t<R>;
                 if constexpr (is_empty_view<T> || is_repeat_view<T> || is_span_v<T> || is_basic_string_view<T>)
                     return std::forward<R>(r) | std::ranges::views::drop(n) | std::ranges::views::take(m - n);
