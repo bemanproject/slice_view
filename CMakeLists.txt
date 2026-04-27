@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-cmake_minimum_required(VERSION 3.28...4.2)
+cmake_minimum_required(VERSION 3.30...4.3)
 
 project(
     beman.slice_view # CMake Project Name, which is also the name of the top-level
     # targets (e.g., library, executable, etc.).
-    DESCRIPTION "Short project description."
+    DESCRIPTION "Slice Range Adaptor"
     LANGUAGES CXX
     VERSION 0.1.0
 )
@@ -24,8 +24,9 @@ option(
     ${PROJECT_IS_TOP_LEVEL}
 )
 
-# for find of beman-install-library
-include(infra/cmake/beman-install-library-config.cmake)
+# for find of beman_install_library and configure_build_telemetry
+include(infra/cmake/beman-install-library.cmake)
+include(infra/cmake/BuildTelemetryConfig.cmake)
 
 add_library(beman.slice_view INTERFACE)
 add_library(beman::slice_view ALIAS beman.slice_view)
@@ -35,11 +36,15 @@ target_sources(
     PUBLIC FILE_SET HEADERS BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
-set_target_properties(beman.slice_view PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
+set_target_properties(
+    beman.slice_view
+    PROPERTIES VERIFY_INTERFACE_HEADER_SETS ${PROJECT_IS_TOP_LEVEL}
+)
 
 add_subdirectory(include/beman/slice_view)
 
-beman_install_library(beman.slice_view)
+beman_install_library(beman.slice_view TARGETS beman.slice_view)
+configure_build_telemetry()
 
 if(BEMAN_SLICE_VIEW_BUILD_TESTS)
     enable_testing()

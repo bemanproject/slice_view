@@ -9,87 +9,64 @@
 #include <type_traits>
 
 namespace beman::slice_view::views {
-    namespace detail {
+namespace detail {
 
-        // trait templates
-        template<template<typename...> class Template, typename T>
-        struct is_specialization_of : std::false_type {};
+// trait templates
+template <template <typename...> class Template, typename T>
+struct is_specialization_of : std::false_type {};
 
-        template<template<typename...> class Template, typename... Args>
-        struct is_specialization_of<Template, Template<Args...>>
-            : std::true_type {};
+template <template <typename...> class Template, typename... Args>
+struct is_specialization_of<Template, Template<Args...>> : std::true_type {};
 
-        // is empty
-        template <typename T>
-        concept is_empty_view =
-        is_specialization_of<
-            std::ranges::empty_view,
-            std::remove_cvref_t<T>
-        >::value;
+// is empty
+template <typename T>
+concept is_empty_view = is_specialization_of<std::ranges::empty_view, std::remove_cvref_t<T>>::value;
 
-        // is repeat
-        template <typename T>
-        concept is_repeat_view =
-        is_specialization_of<
-            std::ranges::repeat_view,
-            std::remove_cvref_t<T>
-        >::value;
+// is repeat
+template <typename T>
+concept is_repeat_view = is_specialization_of<std::ranges::repeat_view, std::remove_cvref_t<T>>::value;
 
-        // is iota
-        template <typename T>
-        concept is_iota_view =
-        is_specialization_of<
-            std::ranges::iota_view,
-            std::remove_cvref_t<T>
-        >::value;
+// is iota
+template <typename T>
+concept is_iota_view = is_specialization_of<std::ranges::iota_view, std::remove_cvref_t<T>>::value;
 
-        // is basic string view
-        template <typename T>
-        concept is_basic_string_view =
-        is_specialization_of<
-            std::basic_string_view,
-            std::remove_cvref_t<T>
-        >::value;
+// is basic string view
+template <typename T>
+concept is_basic_string_view = is_specialization_of<std::basic_string_view, std::remove_cvref_t<T>>::value;
 
-        // is subrange
-        template<typename T>
-        struct is_subrange : std::false_type {};
+// is subrange
+template <typename T>
+struct is_subrange : std::false_type {};
 
-        template<typename I, typename S, std::ranges::subrange_kind K>
-        struct is_subrange<std::ranges::subrange<I, S, K>> : std::true_type {};
+template <typename I, typename S, std::ranges::subrange_kind K>
+struct is_subrange<std::ranges::subrange<I, S, K>> : std::true_type {};
 
-        template<typename T>
-        inline constexpr bool is_subrange_v = is_subrange<std::remove_cvref_t<T>>::value;
+template <typename T>
+inline constexpr bool is_subrange_v = is_subrange<std::remove_cvref_t<T>>::value;
 
-        // is span
-        template<typename T>
-        struct is_span : std::false_type {};
+// is span
+template <typename T>
+struct is_span : std::false_type {};
 
-        template<typename T2, std::size_t Extent>
-        struct is_span<std::span<T2, Extent>> : std::true_type {};
+template <typename T2, std::size_t Extent>
+struct is_span<std::span<T2, Extent>> : std::true_type {};
 
-        template<typename T>
-        inline constexpr bool is_span_v = is_span<std::remove_cvref_t<T>>::value;
+template <typename T>
+inline constexpr bool is_span_v = is_span<std::remove_cvref_t<T>>::value;
 
-    } // namespace detail
-}
+} // namespace detail
+} // namespace beman::slice_view::views
 
 namespace beman::slice_view {
-    namespace detail {
-        template <typename T>
-        concept simple_view_ref =
-                    std::same_as<std::ranges::iterator_t<T>,
-                    std::ranges::iterator_t<const T>> &&
-                    std::same_as<std::ranges::sentinel_t<T>,
-                    std::ranges::sentinel_t<const T>>;
+namespace detail {
+template <typename T>
+concept simple_view_ref = std::same_as<std::ranges::iterator_t<T>, std::ranges::iterator_t<const T>> &&
+                          std::same_as<std::ranges::sentinel_t<T>, std::ranges::sentinel_t<const T>>;
 
-        template <typename rng>
-        concept simple_view =
-                    std::ranges::view<rng> &&
-                    std::ranges::range<const rng> &&
-                    simple_view_ref<rng>;
+template <typename rng>
+concept simple_view = std::ranges::view<rng> && std::ranges::range<const rng> && simple_view_ref<rng>;
 
-    } // namespace detail
-}
+} // namespace detail
+} // namespace beman::slice_view
 
 #endif // BEMAN_SLICE_VIEW_DETAIL_CONCEPT_HPP

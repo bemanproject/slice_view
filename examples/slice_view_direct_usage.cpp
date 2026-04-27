@@ -6,10 +6,9 @@
 
 namespace exe = beman::slice_view;
 
-int main()
-{
+int main() {
     std::string_view text = "Hello, world!";
-    auto s = text | exe::views::slice(7, 12);  // world
+    auto             s    = text | exe::views::slice(7, 12); // world
 
     for (char c : s)
         std::cout << c;
